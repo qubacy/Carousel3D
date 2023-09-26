@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+        app:constraintSetStart="@id/user_card_openable_container_closed_state"
+        app:constraintSetEnd="@id/user_card_openable_container_open_state"
+        app:motionInterpolator="easeInOut"
+        app:duration="800"/>
+
+    <ConstraintSet
+        android:id="@+id/user_card_openable_container_closed_state">
+
+        <Constraint
+            android:id="@id/user_card_openable_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+    </ConstraintSet>
+
+    <ConstraintSet
+        android:id="@+id/user_card_openable_container_open_state">
+
+        <Constraint
+            android:id="@id/user_card_openable_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="100dp"
+            android:layout_marginBottom="100dp"/>
+
+    </ConstraintSet>
+
+</MotionScene>
