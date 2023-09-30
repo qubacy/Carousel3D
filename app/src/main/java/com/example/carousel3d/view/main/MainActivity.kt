@@ -11,7 +11,9 @@ import com.example.carousel3d.view.main.model.MainActivityModel
 import com.example.carousel3d.view.main.model.MainActivityModelFactory
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity(
+    
+) : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val model: MainActivityModel by viewModels {
         MainActivityModelFactory((application as Application).appContainer.userDataRepository)

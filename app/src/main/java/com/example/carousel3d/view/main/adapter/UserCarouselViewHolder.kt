@@ -10,7 +10,7 @@ import com.example.carousel3d.data.repository.User
 import com.example.carousel3d.databinding.UserCardBinding
 import com.example.carousel3d.databinding.UserCardOpenableBinding
 import com.example.carousel3dlib.adapter.Carousel3DViewHolder
-import com.example.carousel3dlib.view.CarouselOpenableView
+import com.example.carousel3dlib.view.Carousel3DOpenableView
 
 class UserCarouselViewHolder(val binding: UserCardBinding)
     : Carousel3DViewHolder(binding.root)
@@ -22,7 +22,7 @@ class UserCarouselViewHolder(val binding: UserCardBinding)
         binding.userCardContentDescription.text = item.description
     }
 
-    override fun getOpenableView(root: ViewGroup, topMarginPx: Int): CarouselOpenableView {
+    override fun getOpenableView(root: ViewGroup, topMarginPx: Int): Carousel3DOpenableView {
         Log.d(UserCarouselAdapter.TAG, "entering getOpenableView().. topMarginPx: $topMarginPx")
 
         val layoutInflater = LayoutInflater.from(binding.root.context)
@@ -96,7 +96,7 @@ class UserCarouselViewHolder(val binding: UserCardBinding)
         return openableViewBinding.root
     }
 
-    override fun recycleOpenableView(openableView: CarouselOpenableView, topMarginPx: Int) {
+    override fun recycleOpenableView(openableView: Carousel3DOpenableView, topMarginPx: Int) {
         val openableViewBinding = UserCardOpenableBinding.bind(openableView)
 
         openableViewBinding.userCardOpenableContent.apply {

@@ -9,9 +9,9 @@ import com.example.carousel3d.databinding.UserCardBinding
 import com.example.carousel3dlib.adapter.Carousel3DAdapter
 import com.example.carousel3dlib.adapter.Carousel3DViewHolder
 import com.example.carousel3dlib.general.Carousel3DContext
-import com.example.carousel3dlib.layoutmanager.HorizontalSwipeHandler
+import com.example.carousel3dlib.layoutmanager.Carousel3DHorizontalSwipeHandler
 
-class UserCarouselAdapter(
+open class UserCarouselAdapter(
     val callback: UserCarouselAdapterCallback)
     : Carousel3DAdapter<User>()
 {
@@ -39,19 +39,27 @@ class UserCarouselAdapter(
     override fun onBindViewHolder(holder: Carousel3DViewHolder, position: Int) {
         Log.d(TAG, "onBindViewHolder() call")
 
+        for (user in getItems()) {
+            Log.d(TAG, "onBindViewHolder(): cur user.username = ${user.username}")
+
+        }
+
         (holder as UserCarouselViewHolder).bind(getItems()[position])
     }
 
     override fun onHorizontalSwipe(
         position: Int,
         direction: Carousel3DContext.SwipeDirection,
-        handler: HorizontalSwipeHandler)
+        handler: Carousel3DHorizontalSwipeHandler)
     {
         Log.d(TAG, "entering onHorizontalSwipe(); direction: ${if (direction == Carousel3DContext.SwipeDirection.LEFT) "left" else "right"}")
 
         val curItem = getItems()[position]
 
-        Log.d(TAG, "onHorizontalSwipe(); curItem position: $position")
+        if (curItem == null)
+            throw IllegalStateException("Current item hasn't been found!")
+
+        Log.d(TAG, "onHorizontalSwipe(); curItem position: $position; items.count = ${getItems().size}")
 
         // doing something..
 

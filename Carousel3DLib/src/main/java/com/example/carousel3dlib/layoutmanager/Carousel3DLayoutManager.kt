@@ -1,8 +1,6 @@
 package com.example.carousel3dlib.layoutmanager
 
 import android.animation.ValueAnimator
-import android.content.Context
-import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -11,11 +9,11 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import com.example.carousel3dlib.adapter.Carousel3DAdapter
 import com.example.carousel3dlib.general.Carousel3DContext
-import com.example.carousel3dlib.view.CarouselOpenableView
+import com.example.carousel3dlib.view.Carousel3DOpenableView
 
-class Carousel3DLayoutManager()
+open class Carousel3DLayoutManager()
     : RecyclerView.LayoutManager(),
-    HorizontalSwipeHandler
+    Carousel3DHorizontalSwipeHandler
 {
     enum class AnimState {
         INIT,
@@ -31,7 +29,6 @@ class Carousel3DLayoutManager()
         const val SCALE_STEP = 0.1f
 
         const val OVERLAPPING_PERCENT = 0.5f
-        const val EXPANDED_TOP_OFFSET_PERCENT = 0.5f
 
         const val DEFAULT_VISIBLE_ITEMS_COUNT = 3
         const val EDGE_INVISIBLE_ITEMS_COUNT = 2
@@ -47,7 +44,6 @@ class Carousel3DLayoutManager()
     }
 
     private var topCenteringOffsetPx = 0
-    private var topCenteringOffsetExpandedPx = 0
     private var foregroundItemHeightPx = 0
 
     private var foregroundItemBottomPx = 0
@@ -71,7 +67,10 @@ class Carousel3DLayoutManager()
     private var curAnimState: AnimState = AnimState.INIT
 
     private var isForegroundItemExtended = false
-    private var openableView: CarouselOpenableView? = null
+    private var openableView: Carousel3DOpenableView? = null
+
+    private var layoutManagerEventListenerList: MutableList<LayoutManagerEventListener> =
+        mutableListOf()
 
     override fun onAdapterChanged(
         oldAdapter: RecyclerView.Adapter<*>?,
@@ -83,6 +82,21 @@ class Carousel3DLayoutManager()
 
         carouselAdapter = newAdapter
     }
+
+    fun addLayoutManagerEventListener(layoutManagerEventListener: LayoutManagerEventListener) {
+        layoutManagerEventListenerList.add(layoutManagerEventListener)
+    }
+
+    private fun notifyLayoutManagerEventListeners(event: LayoutManagerEventListener.Event) {
+        for (layoutManagerEventListener in layoutManagerEventListenerList) {
+            when (event) {
+                LayoutManagerEventListener.Event.CHILDREN_LAYOUTED -> {
+                    layoutManagerEventListener.onChildrenLayouted()
+                }
+            }
+        }
+    }
+
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
         return RecyclerView.LayoutParams(
@@ -137,7 +151,7 @@ class Carousel3DLayoutManager()
             measureChildWithMargins(view, 0, 0)
 
             if (itemVisualIndex == visualItemsCount - 1) {
-                if (topCenteringOffsetPx == 0 || topCenteringOffsetExpandedPx == 0) {
+                if (topCenteringOffsetPx == 0) {
                     calculateTopCenteringOffsetsByItemView(view)
                 }
 
@@ -198,6 +212,8 @@ class Carousel3DLayoutManager()
         } else if (curAnimState == AnimState.AFTER_HORIZONTAL_SWIPE) {
             curAnimState = AnimState.DEFAULT
         }
+
+        notifyLayoutManagerEventListeners(LayoutManagerEventListener.Event.CHILDREN_LAYOUTED)
     }
 
     private fun initOpenableItemView(
@@ -253,12 +269,15 @@ class Carousel3DLayoutManager()
     }
 
     private fun calculateTopCenteringOffsetsByItemView(itemView: View) {
-        topCenteringOffsetPx = (height - (itemView.measuredHeight * OVERLAPPING_PERCENT *
+        val topCenteringOffsetPxBuffer = ((height - (itemView.measuredHeight * OVERLAPPING_PERCENT *
                 ((DEFAULT_SCALE - SCALE_STEP * 2) +
                         (DEFAULT_SCALE - SCALE_STEP)) + itemView.measuredHeight
-                ).toInt()) / 2
-        topCenteringOffsetExpandedPx =
-            (topCenteringOffsetPx * EXPANDED_TOP_OFFSET_PERCENT).toInt()
+                ).toInt()) / 2)
+
+        if (topCenteringOffsetPxBuffer > 0)
+            topCenteringOffsetPx = topCenteringOffsetPxBuffer
+        else
+            topCenteringOffsetPx = 0
     }
 
     private fun shakeItemView(itemView: View) {
@@ -324,32 +343,32 @@ class Carousel3DLayoutManager()
             Log.d(TAG, "scrollVerticallyBy() dy: $dy; curScrollingOffset: $curScrollingVerticalOffset")
 
         } else if (curScrollingState == RecyclerView.SCROLL_STATE_SETTLING) {
-            var isToDown = false
+            var rollingDirection: Carousel3DContext.RollingDirection
 
             if (curScrollingVerticalOffset > 0) {
                 // going "down".. \/
 
                 if (curScrollingVerticalOffset < foregroundItemHeightPx / 2) return 0
 
-                curItemIndexOffset = if (curItemIndexOffset == -(itemCount - 1)) 0 else
-                    curItemIndexOffset - 1
+                curItemIndexOffset = getItemIndexOffsetAfterVerticalRolling(
+                    Carousel3DContext.RollingDirection.DOWN)
 
-                isToDown = true
+                rollingDirection = Carousel3DContext.RollingDirection.DOWN
 
             } else {
                 // going "up".. /\
 
                 if (-curScrollingVerticalOffset < foregroundItemHeightPx / 2) return 0
 
-                curItemIndexOffset = if (curItemIndexOffset == itemCount - 1) 0 else
-                    curItemIndexOffset + 1
+                curItemIndexOffset = getItemIndexOffsetAfterVerticalRolling(
+                    Carousel3DContext.RollingDirection.UP)
 
-                isToDown = false
+                rollingDirection = Carousel3DContext.RollingDirection.UP
             }
 
             curScrollingVerticalOffset = 0
 
-            animateRotation(isToDown, null) {
+            animateRotation(rollingDirection, null) {
                 requestLayout()
                 curScrollingOrientation = Carousel3DContext.ScrollOrientation.NONE
             }
@@ -361,11 +380,11 @@ class Carousel3DLayoutManager()
     }
 
     private fun animateRotation(
-        isToDown: Boolean,
+        rollingDirection: Carousel3DContext.RollingDirection,
         itemCondition: ((itemVisualIndex: Int, item: View) -> Boolean)?,
         postAnimationRunnable: Runnable)
     {
-        Log.d(TAG, "entering animateRotation() isToDown: $isToDown; itemCount = $itemCount")
+        Log.d(TAG, "entering animateRotation() rollingDir: $rollingDirection; itemCount = $itemCount")
 
         isAnimating = true
 
@@ -389,13 +408,17 @@ class Carousel3DLayoutManager()
 
             val curAnimator = curChild.animate()
 
-            val translationYPx = if (nextChild != null && !isToDown) {
+            val translationYPx = if (nextChild != null
+                && rollingDirection == Carousel3DContext.RollingDirection.UP)
+            {
                 nextChild.y - curChild.y
 
-            } else if (prevChild != null && isToDown) {
+            } else if (prevChild != null
+                && rollingDirection == Carousel3DContext.RollingDirection.DOWN)
+            {
                 -(curChild.y - prevChild.y)
 
-            } else if (!isToDown) {
+            } else if (rollingDirection == Carousel3DContext.RollingDirection.UP) {
                 foregroundItemHeightPx
 
             } else {
@@ -404,7 +427,7 @@ class Carousel3DLayoutManager()
 
             curAnimator.translationY(translationYPx.toFloat())
 
-            val scale = if (!isToDown) {
+            val scale = if (rollingDirection == Carousel3DContext.RollingDirection.UP) {
                 curChild.scaleX + SCALE_STEP
             } else {
                 curChild.scaleX - SCALE_STEP
@@ -414,16 +437,22 @@ class Carousel3DLayoutManager()
             curAnimator.scaleY(scale)
 
             if (itemVisualIndex == visualItemsCount - 1) {
-                if (isToDown) {
+                if (rollingDirection == Carousel3DContext.RollingDirection.DOWN) {
                     curChild.visibility = View.VISIBLE
                     curAnimator.alpha(1f)
                 }
-            } else if (itemVisualIndex == 0 && !isToDown) {
+            } else if (itemVisualIndex == 0
+                && rollingDirection == Carousel3DContext.RollingDirection.UP)
+            {
                 curChild.visibility = View.VISIBLE
                 curAnimator.alpha(1f)
-            } else if (itemVisualIndex == 1 && isToDown) {
+            } else if (itemVisualIndex == 1
+                && rollingDirection == Carousel3DContext.RollingDirection.DOWN)
+            {
                 curAnimator.alpha(0f)
-            } else if (itemVisualIndex == visualItemsCount - 1 - 1 && !isToDown) {
+            } else if (itemVisualIndex == visualItemsCount - 1 - 1
+                && rollingDirection == Carousel3DContext.RollingDirection.UP)
+            {
                 curAnimator.alpha(0f)
             }
 
@@ -580,7 +609,8 @@ class Carousel3DLayoutManager()
 
                 curAnimState = AnimState.HORIZONTAL_SWIPE
 
-                animateRotation(false, fun (itemVisualIndex, itemView) : Boolean {
+                animateRotation(Carousel3DContext.RollingDirection.UP,
+                    fun (itemVisualIndex, itemView) : Boolean {
                     return (itemVisualIndex != visualItemsCount - 2
                             && itemVisualIndex != visualItemsCount - 1)
                 }) {
@@ -595,16 +625,47 @@ class Carousel3DLayoutManager()
     }
 
     private fun getItemIndexOffsetAfterHorizontalSwipe(): Int {
-        return if (curItemIndexOffset >= 0) {
-            if (curItemIndexOffset <= itemCount - 1 - 2) curItemIndexOffset
-            else -1
+        if (itemCount <= 0) return 0
+
+        val originalItemCount = itemCount + 1
+
+        return if (originalItemCount <= 2) {
+            0
+
         } else {
-            if (curItemIndexOffset >= -2) -1
-            else curItemIndexOffset + 1
+            if (curItemIndexOffset < -1) {
+                curItemIndexOffset + 1
+
+            } else if (curItemIndexOffset >= -1 && curItemIndexOffset != itemCount) {
+                curItemIndexOffset
+
+            } else {
+                curItemIndexOffset - 1
+            }
+        }
+    }
+
+    private fun getItemIndexOffsetAfterVerticalRolling(
+        direction: Carousel3DContext.RollingDirection): Int
+    {
+        if (itemCount <= 0) return 0
+
+        return when (direction) {
+            Carousel3DContext.RollingDirection.UP -> {
+                if (curItemIndexOffset == itemCount - 1) 0 else
+                    curItemIndexOffset + 1
+            }
+            Carousel3DContext.RollingDirection.DOWN -> {
+                if (curItemIndexOffset == -(itemCount - 1)) 0 else
+                    curItemIndexOffset - 1
+            }
+            else -> { 0 }
         }
     }
 
     private fun getItemPositionFromVisualIndex(itemVisualIndex: Int): Int {
+        if (itemCount <= 0) return 0
+
         val curItemIndexBuffer = (itemVisualIndex + curItemIndexOffset)
         val curItemIndexPos =
             if (curItemIndexBuffer < 0) itemCount - (-curItemIndexBuffer)

@@ -7,10 +7,10 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.constraintlayout.motion.widget.MotionLayout
 import com.example.carousel3d.databinding.UserCardOpenableBinding
-import com.example.carousel3dlib.view.CarouselOpenableView
+import com.example.carousel3dlib.view.Carousel3DOpenableView
 
 class UserCardOpenable(context: Context, attributeSet: AttributeSet)
-    : CarouselOpenableView(context, attributeSet)
+    : Carousel3DOpenableView(context, attributeSet)
 {
     companion object {
         const val TAG = "UserCardOpenable"

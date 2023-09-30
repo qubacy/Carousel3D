@@ -7,6 +7,12 @@ object Carousel3DContext {
         RIGHT
     }
 
+    enum class RollingDirection {
+        NONE,
+        UP,
+        DOWN
+    }
+
     enum class SwipeAction {
         NONE,
         ERASE
