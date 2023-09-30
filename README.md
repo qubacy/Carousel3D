@@ -15,7 +15,7 @@ allprojects {
 ### II. Add the dependency like this:
 ```
 dependencies {
-	        implementation 'com.github.qubacy:Carousel3D:Tag'
+	        implementation 'com.github.qubacy:Carousel3D:0.0.2-pre2'
 	}
 ```
 ### III. You're ready to go!
