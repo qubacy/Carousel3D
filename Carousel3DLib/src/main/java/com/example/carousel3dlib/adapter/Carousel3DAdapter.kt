@@ -2,6 +2,7 @@ package com.example.carousel3dlib.adapter
 
 import android.util.Log
 import android.view.View
+import android.view.View.OnLayoutChangeListener
 import androidx.recyclerview.widget.RecyclerView
 import com.example.carousel3dlib.general.Carousel3DContext
 import com.example.carousel3dlib.layoutmanager.Carousel3DHorizontalSwipeHandler
@@ -40,9 +41,32 @@ abstract class Carousel3DAdapter<ItemType>() :
         // It's really important to do this kind of checking before calling notifyDataSetChanged():
 
         if (mRecyclerView == null) return
-        if (mRecyclerView!!.scrollState != RecyclerView.SCROLL_STATE_IDLE
-         || mRecyclerView!!.isInLayout)
-        {
+        if (mRecyclerView!!.scrollState != RecyclerView.SCROLL_STATE_IDLE) {
+            mRecyclerView!!.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                    super.onScrollStateChanged(recyclerView, newState)
+
+                    if (newState != RecyclerView.SCROLL_STATE_IDLE) return
+
+                    this@Carousel3DAdapter.setItems(itemList)
+
+                    mRecyclerView!!.removeOnScrollListener(this)
+                }
+            })
+
+            return
+        }
+        if (mRecyclerView!!.isInLayout) {
+            mRecyclerView!!.addOnLayoutChangeListener(object : OnLayoutChangeListener {
+                override fun onLayoutChange(
+                    p0: View?, p1: Int, p2: Int, p3: Int, p4: Int, p5: Int, p6: Int, p7: Int, p8: Int
+                ) {
+                    this@Carousel3DAdapter.setItems(itemList)
+
+                    mRecyclerView!!.removeOnLayoutChangeListener(this)
+                }
+            })
+
             return
         }
 
