@@ -165,17 +165,6 @@ open class Carousel3DLayoutManager()
                 (view.measuredHeight * OVERLAPPING_PERCENT + consumedVerticallyPx).toInt() else
                 (view.measuredHeight).toInt() + consumedVerticallyPx
 
-            layoutDecorated(
-                view,
-                paddingLeft,
-                topPosition,
-                view.measuredWidth + paddingRight,
-                bottomPosition)
-
-            if (carouselAdapter != null && carouselAdapter?.areItemsExpandable() == true) {
-                initOpenableItemView(view, itemVisualIndex)
-            }
-
             Log.d(TAG, "onLayoutChildren() view.scale = ${view.scaleY}; view.top = ${view.top}; view.bottom = ${view.bottom}; view.translationY = ${view.translationY}")
 
             curScale += SCALE_STEP
@@ -195,6 +184,17 @@ open class Carousel3DLayoutManager()
                 if (itemVisualIndex == 1) {
                     foregroundItemHeightPx = view.measuredHeight
                 }
+            }
+
+            layoutDecorated(
+                view,
+                paddingLeft,
+                topPosition,
+                view.measuredWidth + paddingRight,
+                bottomPosition)
+
+            if (carouselAdapter != null && carouselAdapter?.areItemsExpandable() == true) {
+                initOpenableItemView(view, itemVisualIndex)
             }
 
             Log.d(TAG, "onLayoutChildren() consumedVerticallyPx = $consumedVerticallyPx")
