@@ -549,10 +549,7 @@ open class Carousel3DLayoutManager()
         if (carouselAdapter?.areItemsSwipeable() == true) {
             isHorizontalSwipeRequested = true
 
-            carouselAdapter!!.onHorizontalSwipe(
-                curPosition,
-                Carousel3DContext.SwipeDirection.RIGHT,
-                this)
+            carouselAdapter!!.onHorizontalSwipe(curPosition, direction, this)
 
             playHorizontalSlidingAnimation(curItem, direction)
 
