@@ -97,7 +97,6 @@ open class Carousel3DLayoutManager()
         }
     }
 
-
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
         return RecyclerView.LayoutParams(
             RecyclerView.LayoutParams.WRAP_CONTENT,
@@ -191,7 +190,8 @@ open class Carousel3DLayoutManager()
                 paddingLeft,
                 topPosition,
                 view.measuredWidth + paddingRight,
-                bottomPosition)
+                bottomPosition
+            )
 
             if (carouselAdapter != null && carouselAdapter?.areItemsExpandable() == true) {
                 initOpenableItemView(view, itemVisualIndex)
