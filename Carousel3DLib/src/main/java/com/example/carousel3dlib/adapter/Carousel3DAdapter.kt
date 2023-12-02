@@ -39,7 +39,7 @@ abstract class Carousel3DAdapter<ItemType>() :
     abstract fun getViewHolderForItemView(view: View): Carousel3DViewHolder
     abstract fun areItemsExpandable(): Boolean
 
-    open fun setItems(itemList: List<ItemType>) {
+    open fun setItems(itemList: List<ItemType>, notify: Boolean = true) {
         Log.d(TAG, "setItems(): itemList.size = ${itemList.size}")
 
         // It's really important to do this kind of checking before calling notifyDataSetChanged():
@@ -76,7 +76,7 @@ abstract class Carousel3DAdapter<ItemType>() :
 
         mItemList = itemList
 
-        notifyDataSetChanged()
+        if (notify) notifyDataSetChanged()
     }
 
     fun getItems(): List<ItemType> {
