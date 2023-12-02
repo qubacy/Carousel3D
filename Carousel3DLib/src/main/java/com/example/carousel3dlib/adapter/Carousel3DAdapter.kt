@@ -32,6 +32,10 @@ abstract class Carousel3DAdapter<ItemType>() :
         direction: Carousel3DContext.SwipeDirection,
         handler: Carousel3DHorizontalSwipeHandler
     )
+    abstract fun onVerticalRoll(
+        edgePosition: Int,
+        direction: Carousel3DContext.RollingDirection
+    )
     abstract fun getViewHolderForItemView(view: View): Carousel3DViewHolder
     abstract fun areItemsExpandable(): Boolean
 

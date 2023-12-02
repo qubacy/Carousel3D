@@ -368,8 +368,11 @@ open class Carousel3DLayoutManager()
 
             curScrollingVerticalOffset = 0
 
+            onVerticalRolling(rollingDirection)
+
             animateRotation(rollingDirection, null) {
                 requestLayout()
+
                 curScrollingOrientation = Carousel3DContext.ScrollOrientation.NONE
             }
 
@@ -377,6 +380,20 @@ open class Carousel3DLayoutManager()
         }
 
         return curScrollingVerticalOffset
+    }
+
+    private fun onVerticalRolling(rollingDirection: Carousel3DContext.RollingDirection) {
+        val visualItemsCount = if (itemCount >= DEFAULT_VISIBLE_ITEMS_COUNT)
+            DEFAULT_VISIBLE_ITEMS_COUNT + EDGE_INVISIBLE_ITEMS_COUNT
+        else itemCount
+
+        val edgePosition = if (rollingDirection == Carousel3DContext.RollingDirection.UP) {
+            getItemPositionFromVisualIndex(visualItemsCount - 1)
+        } else {
+            getItemPositionFromVisualIndex(0)
+        }
+
+        carouselAdapter?.onVerticalRoll(edgePosition, rollingDirection)
     }
 
     private fun animateRotation(

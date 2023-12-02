@@ -70,6 +70,13 @@ open class UserCarouselAdapter(
         handler.onHorizontalSwipeAction(position, Carousel3DContext.SwipeAction.ERASE)
     }
 
+    override fun onVerticalRoll(
+        edgePosition: Int,
+        direction: Carousel3DContext.RollingDirection
+    ) {
+        Log.d(TAG, "onVerticalRoll(): edgePos = $edgePosition; direction = ${direction.name}")
+    }
+
     override fun areItemsSwipeable(): Boolean {
         return true
     }
