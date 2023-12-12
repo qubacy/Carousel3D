@@ -368,7 +368,7 @@ open class Carousel3DLayoutManager()
 
             curScrollingVerticalOffset = 0
 
-            onVerticalRolling(rollingDirection)
+//            onVerticalRolling(rollingDirection)
 
             animateRotation(rollingDirection, null) {
                 requestLayout()
@@ -402,6 +402,8 @@ open class Carousel3DLayoutManager()
         postAnimationRunnable: Runnable)
     {
         Log.d(TAG, "entering animateRotation() rollingDir: $rollingDirection; itemCount = $itemCount")
+
+        onVerticalRolling(rollingDirection)
 
         isAnimating = true
 
