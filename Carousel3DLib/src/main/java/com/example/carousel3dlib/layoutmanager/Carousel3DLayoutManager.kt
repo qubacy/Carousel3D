@@ -75,6 +75,8 @@ open class Carousel3DLayoutManager()
     private var horizontalScrollCallbackList: MutableList<Carousel3DHorizontalScrollCallback> =
         mutableListOf()
 
+    private var lastOffsetByHorizontalScrolling: Float = 0f
+
     override fun onAdapterChanged(
         oldAdapter: RecyclerView.Adapter<*>?,
         newAdapter: RecyclerView.Adapter<*>?
@@ -571,6 +573,8 @@ open class Carousel3DLayoutManager()
         } else {
             Log.d(TAG, "scrollHorizontallyBy() bouncing back..")
 
+            lastOffsetByHorizontalScrolling = curScrollingHorizontalOffset.toFloat()
+
             playHorizontalSlidingAnimation(curItem) {
                 curScrollingOrientation = Carousel3DContext.ScrollOrientation.NONE
             }
@@ -614,19 +618,14 @@ open class Carousel3DLayoutManager()
                 duration = SLIDING_ANIMATION_DURATION
                 interpolator = AccelerateDecelerateInterpolator()
             }?.setUpdateListener {animator ->
-                Log.d(TAG, "playHorizontalSlidingAnimation(): animatedFraction = ${animator.animatedFraction}")
+                if (direction == Carousel3DContext.SwipeDirection.BACK) {
+                    val originalOffsetFraction =
+                        lastOffsetByHorizontalScrolling / HORIZONTAL_SCROLL_OFFSET
 
-                val horizontalOffsetFraction = when (direction) {
-                    Carousel3DContext.SwipeDirection.LEFT -> -(animator.animatedFraction)
-                    Carousel3DContext.SwipeDirection.RIGHT -> animator.animatedFraction
-                    else -> {
-                        val offsetOriginalSign = if ((animator.animatedValue as Float) > 0) 1 else -1
-
-                        offsetOriginalSign * (1 - animator.animatedFraction)
-                    }
+                    val horizontalOffsetFraction = originalOffsetFraction *
+                            (1 - animator.animatedFraction)
+                    fireHorizontalScrollCallbacks(horizontalOffsetFraction)
                 }
-
-                fireHorizontalScrollCallbacks(horizontalOffsetFraction)
 
             }?.withEndAction{
                 lastBouncingBackAnimator = null
