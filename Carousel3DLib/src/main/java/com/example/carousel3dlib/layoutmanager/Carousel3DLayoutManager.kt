@@ -39,8 +39,9 @@ open class Carousel3DLayoutManager()
 
         const val INIT_FOREGROUND_ITEM_SHAKE_ANIMATION_TRANSLATION_X = 100f
 
-        const val HORIZONTAL_SCROLL_OFFSET_LEFT_SWIPE = -300f
-        const val HORIZONTAL_SCROLL_OFFSET_RIGHT_SWIPE = 300f
+        const val HORIZONTAL_SCROLL_OFFSET = 300f
+        const val HORIZONTAL_SCROLL_OFFSET_LEFT_SWIPE = -HORIZONTAL_SCROLL_OFFSET
+        const val HORIZONTAL_SCROLL_OFFSET_RIGHT_SWIPE = HORIZONTAL_SCROLL_OFFSET
     }
 
     private var topCenteringOffsetPx = 0
@@ -71,6 +72,8 @@ open class Carousel3DLayoutManager()
 
     private var layoutManagerEventListenerList: MutableList<LayoutManagerEventListener> =
         mutableListOf()
+    private var horizontalScrollCallbackList: MutableList<Carousel3DHorizontalScrollCallback> =
+        mutableListOf()
 
     override fun onAdapterChanged(
         oldAdapter: RecyclerView.Adapter<*>?,
@@ -87,6 +90,10 @@ open class Carousel3DLayoutManager()
         layoutManagerEventListenerList.add(layoutManagerEventListener)
     }
 
+    fun addHorizontalScrollCallback(horizontalScrollCallback: Carousel3DHorizontalScrollCallback) {
+        horizontalScrollCallbackList.add(horizontalScrollCallback)
+    }
+
     private fun notifyLayoutManagerEventListeners(event: LayoutManagerEventListener.Event) {
         for (layoutManagerEventListener in layoutManagerEventListenerList) {
             when (event) {
@@ -95,6 +102,10 @@ open class Carousel3DLayoutManager()
                 }
             }
         }
+    }
+
+    private fun fireHorizontalScrollCallbacks(fraction: Float) {
+        horizontalScrollCallbackList.forEach { it.onHorizontalScroll(fraction) }
     }
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
@@ -527,6 +538,14 @@ open class Carousel3DLayoutManager()
 
             curItem.translationX = curScrollingHorizontalOffset.toFloat()
 
+            val horizontalScrollFraction = curScrollingHorizontalOffset / HORIZONTAL_SCROLL_OFFSET
+            val horizontalScrollFractionNormalized =
+                if (horizontalScrollFraction >= 1f) 1f
+                else if (horizontalScrollFraction <= -1f) -1f
+                else horizontalScrollFraction
+
+            fireHorizontalScrollCallbacks(horizontalScrollFractionNormalized)
+
         } else if (curScrollingState == RecyclerView.SCROLL_STATE_SETTLING) {
             handleEndOfHorizontalScroll(curItem)
 
@@ -594,6 +613,21 @@ open class Carousel3DLayoutManager()
                 translationX(transitionX)
                 duration = SLIDING_ANIMATION_DURATION
                 interpolator = AccelerateDecelerateInterpolator()
+            }?.setUpdateListener {animator ->
+                Log.d(TAG, "playHorizontalSlidingAnimation(): animatedFraction = ${animator.animatedFraction}")
+
+                val horizontalOffsetFraction = when (direction) {
+                    Carousel3DContext.SwipeDirection.LEFT -> -(animator.animatedFraction)
+                    Carousel3DContext.SwipeDirection.RIGHT -> animator.animatedFraction
+                    else -> {
+                        val offsetOriginalSign = if ((animator.animatedValue as Float) > 0) 1 else -1
+
+                        offsetOriginalSign * (1 - animator.animatedFraction)
+                    }
+                }
+
+                fireHorizontalScrollCallbacks(horizontalOffsetFraction)
+
             }?.withEndAction{
                 lastBouncingBackAnimator = null
 
